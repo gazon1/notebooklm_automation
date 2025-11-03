@@ -3,6 +3,7 @@ import enum
 from sqlalchemy import Column, Enum, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 
+
 Base = declarative_base()
 
 
@@ -37,7 +38,7 @@ class Video(Base):
     notebooklm_document_id = Column(String(100))  # ID документа в NotebookLM
     zotero_item_id = Column(String(100))  # ID элемента в Zotero
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<Video(id={self.id}, title='{self.title[:30]}...', "
             f"status={self.status.value}, summary={'yes' if self.summary else 'no'})>"

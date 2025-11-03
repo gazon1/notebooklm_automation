@@ -1,19 +1,16 @@
 from contextlib import contextmanager
 
 from loguru import logger
+from models import Base, Video
 from sqlalchemy import create_engine, inspect, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
-
-from models import Base, Video
 
 
 class DatabaseManager:
     def __init__(self, db_url="sqlite:///youtube_videos.db"):
         self.engine = create_engine(db_url, echo=False)
-        self.SessionLocal = sessionmaker(
-            autocommit=False, autoflush=False, bind=self.engine
-        )
+        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
     def create_tables(self):
         """Создает все таблицы"""
@@ -52,15 +49,13 @@ class DatabaseManager:
         try:
             with self.session_scope() as session:
                 # Используем statement API (SELECT) для более чистого кода
-                stmt = select(Video).where(Video.title == title)
+                stmt = select(Video).where(Video.title == title, Video.summary.isnot(None))
 
                 # Используем .one_or_none() для эффективной проверки существования
                 video = session.execute(stmt).scalars().first()
 
                 if video:
-                    logger.warning(
-                        f"⚠️ Видео с заголовком '{title[:30]}...' уже существует (ID: {video.id})."
-                    )
+                    logger.warning(f"⚠️ Видео с заголовком '{title[:30]}...' уже существует (ID: {video.id}).")
                     return True
                 return False
 
@@ -86,14 +81,10 @@ class DatabaseManager:
                 session.flush()  # Принудительно вставляет, чтобы получить ID
                 session.refresh(new_video)  # Обновляет объект с ID
 
-                logger.info(
-                    f"✅ Видео '{new_video.title[:30]}...' (ID: {new_video.id}) успешно добавлено."
-                )
+                logger.info(f"✅ Видео '{new_video.title[:30]}...' (ID: {new_video.id}) успешно добавлено.")
                 return None
         except IntegrityError as e:
-            logger.error(
-                f"❌ Ошибка целостности данных: URL уже существует или нарушено другое ограничение. {e}"
-            )
+            logger.error(f"❌ Ошибка целостности данных: URL уже существует или нарушено другое ограничение. {e}")
             return None
         except Exception as e:
             # Ошибки, не связанные с целостностью, обрабатываются в session_scope и перебрасываются

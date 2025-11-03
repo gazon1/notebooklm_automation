@@ -4,22 +4,14 @@ import time
 from pathlib import Path as p
 
 import click
+from adspower_api_utils import click_random, close_browser, start_browser
+from constants import PROMPT
+from database import DatabaseManager
 from loguru import logger
+from models import ProcessingStatus
 from patchright.sync_api import Locator, Page, expect, sync_playwright
 
-from adspower_api_utils import click_random, close_browser, start_browser
-from database import DatabaseManager
-from models import ProcessingStatus
 
-PROMPT = """
-Create a comprehensive briefing document that synthesizes the main themes and ideas from the sources.
-Start with a concise Executive Summary that presents the most critical takeaways upfront.
-The body of the document must provide a detailed and thorough examination of the main themes, evidence, and conclusions found in the sources.
-This analysis should be structured logically with headings and bullet points to ensure clarity.
-The tone must be objective and incisive.
-
-Write all sources in summary and source link to original article/video
-"""
 T = 5
 
 # Configure loguru logger for better output formatting
@@ -50,7 +42,7 @@ def scroll_until_loc(
     step: int = 10000,
     delay: float = 0.3,
     max_steps: int = 50,
-):
+) -> bool:
     """
     Скроллит колесом мыши вниз, пока footer не окажется в viewport.
     :param page: Playwright Page
@@ -127,14 +119,10 @@ def create_source_list(source_type: str) -> list:
                 blank_line_count += 1
 
         if len(urls) == 0:
-            raise ValueError(
-                f"Error: {source_type}_links.csv does not contain any valid records."
-            )
+            raise ValueError(f"Error: {source_type}_links.csv does not contain any valid records.")
 
         if blank_line_count > 0:
-            logger.info(
-                f"Note: {blank_line_count} empty records from your {source_type}_csv file skipped."
-            )
+            logger.info(f"Note: {blank_line_count} empty records from your {source_type}_csv file skipped.")
 
     return urls
 
@@ -168,9 +156,7 @@ def main(profile_number: str) -> None:
             return
 
         with sync_playwright() as playwright:
-            browser = playwright.chromium.connect_over_cdp(
-                puppeteer_ws, slow_mo=random.randint(2000, 3000)
-            )
+            browser = playwright.chromium.connect_over_cdp(puppeteer_ws, slow_mo=random.randint(2000, 3000))
             context = browser.contexts[0] if browser.contexts else browser.new_context()
 
             context.add_init_script("""
@@ -195,9 +181,7 @@ def main(profile_number: str) -> None:
             video_source_list = page.locator("div.single-source-container").all()
 
             for url_index, current_url in enumerate(video_source_list):
-                title = current_url.locator(
-                    'div[aria-label="Название источника"]'
-                ).inner_text()
+                title = current_url.locator('div[aria-label="Название источника"]').inner_text()
 
                 if db_manager.video_exists_by_title(title):
                     logger.warning(
@@ -214,15 +198,11 @@ def main(profile_number: str) -> None:
                     logger.error("Не активна кнопка включить источник, пропускаю")
                     continue
 
-                logger.info(
-                    f"Source [{url_index + 1}/{len(video_source_list)}] ({title}) summarising..."
-                )
+                logger.info(f"Source [{url_index + 1}/{len(video_source_list)}] ({title}) summarising...")
 
                 page.locator("textarea.cdk-textarea-autosize").fill(PROMPT)
 
-                send_prompt_button = page.locator(
-                    "query-box > div > div > form > div > button"
-                )
+                send_prompt_button = page.locator("query-box > div > div > form > div > button")
                 expect(send_prompt_button).to_be_enabled()
                 click_random(send_prompt_button)
 
@@ -243,18 +223,14 @@ def main(profile_number: str) -> None:
                         copy_button = element
                         break
                 else:
-                    logger.error(
-                        f"Не нашёл кнопку копирования в видимой области. Пропускаю ({title})"
-                    )
+                    logger.error(f"Не нашёл кнопку копирования в видимой области. Пропускаю ({title})")
                     continue
 
                 click_random(copy_button)
 
                 text_from_buffer = read_clipboard_content(page)
                 if source_type_button.is_visible():
-                    click_random(
-                        source_type_button
-                    )  # Выключаю источник после копирования
+                    click_random(source_type_button)  # Выключаю источник после копирования
                 logger.info(f"Text from clipboard: {text_from_buffer[:100]}...")
 
                 db_manager.insert_video(
@@ -264,9 +240,7 @@ def main(profile_number: str) -> None:
                     status=ProcessingStatus.SENT_TO_NOTEBOOKLM,
                     summary=text_from_buffer,
                 )
-                logger.success(
-                    f"Source [{url_index + 1}/{len(video_source_list)}] ({title}) sent to database."
-                )
+                logger.success(f"Source [{url_index + 1}/{len(video_source_list)}] ({title}) sent to database.")
             # Calculate and display execution time
             end_time = time.time()
             total_seconds = round(end_time - start_time)
@@ -274,9 +248,7 @@ def main(profile_number: str) -> None:
             if total_seconds > 59:
                 minutes_elapsed = total_seconds // 60
                 seconds_remaining = total_seconds % 60
-                logger.info(
-                    f"Time elapsed: {minutes_elapsed} minutes and {seconds_remaining} seconds."
-                )
+                logger.info(f"Time elapsed: {minutes_elapsed} minutes and {seconds_remaining} seconds.")
             else:
                 logger.info(f"Time elapsed: {total_seconds} seconds.")
 
