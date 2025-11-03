@@ -1,0 +1,151 @@
+[tool.poetry]
+name = "WB parser"
+readme = "README.md"
+description = "A parser project for Wildberries data processing."
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<4.0"
+# pre-commit = "3.8.0"
+ruff = "0.5.7"
+# Common runtime dependencies
+requests = "^2.32.5"
+loguru = "0.7.3"
+omegaconf = "2.3.0"
+playwright = '*'
+httpx = '0.28.1'
+tenacity = '*'
+dotenv = "0.9.9"
+retry = "0.9.2"
+sqlalchemy = "2.0.44"
+click = "8.3.0"
+pandas = "2.3.3"
+aiosqlite = "0.21.0"
+nicegui = "3.1.0"
+aiogram = "3.22.0"
+stem = "^1.8.2"
+pytest-asyncio = "^1.2.0"
+pytest = "^8.4.2"
+python-tornet = "^2.2.1"
+fake-useragent = "^2.2.0"
+tf-playwright-stealth = "^1.2.0"
+patchright = "^1.55.2"
+types-requests = "^2.32.4.20250913"
+markdown = "*"
+pdfkit = "*"
+pyzotero = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+# --------- RUFF ---------------
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".env",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "env",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "templates"
+] # recommended list
+
+# Ruff supports a top-level `src` option in lieu of isort's `src_paths` setting.
+# All paths are relative to the project root, which is the directory containing the pyproject.toml.
+src = ["/workspace"]
+
+line-length = 120
+# target-version = "py311" # python version
+respect-gitignore = true # avoid gitignore files
+
+[tool.ruff.lint]
+exclude = ["*.ipynb"] # don't use linters for notebooks, only formatter
+
+# Ruff lint rules are here: https://docs.astral.sh/ruff/rules
+# flake8-builtins - A
+# flake8-bugbear - B
+# pycodestyle - E
+# Pyflakes - F
+# isort - I
+# pandas-vet - PD
+# Pylint - PL
+# flake8-quotes Q
+# flake8-simplify SIM
+# Pylint Warning - W
+
+select = ["A", "B", "C", "E", "F", "I", "PD", "PL", "Q", "SIM", "W"] 
+
+# PLR0913 - too many arguments in function definition (5 by default)
+# recommended to ignore in docs:
+ignore = [
+    "PLR0913",  # Too many arguments
+    "E501",     # Line too long - handled by formatter
+    "C901",     # Too complex
+]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.isort]
+# known-first-party - A list of modules to consider first-party.
+# Example: 'import model' instead of 'import src.model'
+# known-first-party = [""]
+
+# Order the import sections.
+section-order = ["future", "standard-library", "third-party",  "first-party", "local-folder"]
+lines-after-imports = 2
+
+[tool.ruff.lint.pydocstyle]
+# convention - Style of documentation
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false # Like Black
+line-ending = "auto" # Like Black
+docstring-code-format = true # format docstring or not
+docstring-code-line-length = "dynamic"
+
+# --------- MYPY ---------------
+[tool.mypy]
+python_version = ">=3.12,<4.0"
+
+ignore_missing_imports = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+warn_redundant_casts = true
+no_implicit_optional = true
+strict_optional = true
+
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests", 
+]
+addopts="--pdbcls=IPython.terminal.debugger:TerminalPdb"
+python_paths = [
+    ".",
+]
